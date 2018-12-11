@@ -1,60 +1,91 @@
 import React, { Component } from 'react';
-import axios from 'axios'
-import Searchbar from './components/Searchbar/Searchbar'
-import Info from './components/Info/Info'
-import './App.css'
+import axios from 'axios';
+import Searchbar from './components/Searchbar/Searchbar';
+import Info from './components/Info/Info';
+import Spinner from './components/Spinner/Spinner';
 class App extends Component {
 
-  client_id = "Iv1.3710c3ff5670c7be";
-  client_secret = "83ff1328730d0264d659a0ca790f4062911f3fe6"
-  // 3d38cd3faf12065cf1c1312bf098db059314a3b5
-
   state = {
-    name: null,
-    login: null,
-    prof_page: null,
+    typed_username: null,
+    query: null,
+    username: null,
+    avatar_url: null,
     repos: null,
-    avatar: null,
-    value: null
+    followers: null,
+    github_link: null,
+    name: null,
+    bio: null,
+    loading: null,
   }
 
-  componentDidUpdate(user) {
-    if (this.state.value) {
-      if (this.state.value !== this.state.login) {
-        axios.get(`https://api.github.com/users/${this.state.value}?client_id=${this.client_id}&client_secret=${this.client_secret}`)
+
+  handleSubmit = (e) => {
+    e.preventDefault();
+    if (this.state.username) {
+      this.setState({
+        username: null,
+        avatar_url: null,
+        repos: null,
+        followers: null,
+        github_link: null,
+        name: null,
+        bio: null,
+      })
+    }
+    if (!this.state.typed_username) {
+      alert("please enter a username")
+    } else {
+      this.setState({
+        query: this.state.typed_username,
+        loading: true,
+      }, () => {
+        axios.get(`https://api.github.com/users/${this.state.query}`)
           .then(res => {
             this.setState({
-              name: res.data.name,
-              login: res.data.login,
-              prof_page: res.data.html_url,
+              username: res.data.login,
+              avatar_url: res.data.avatar_url,
               repos: res.data.public_repos,
-              avatar: res.data.avatar_url
+              followers: res.data.followers,
+              github_link: res.data.html_url,
+              name: res.data.name,
+              bio: res.data.bio,
+              loading: false
             })
-
-          });
-      }
+          })
+      });
     }
   }
-
-  onChangeHandler = (e) => {
+  handleChange = (e) => {
     this.setState({
-      value: e.target.value
+      typed_username: e.target.value
     })
   }
+
   render() {
-    let info = null;
-    if (this.state.value) {
-      info = <Info name={this.state.name}
+    let t = this.state.username;
+    if (t) {
+      t = <Info
         username={this.state.username}
-        prof_page={this.state.prof_page}
+        avatar_url={this.state.avatar_url}
         repos={this.state.repos}
-        avatar={this.state.avatar} />
+        followers={this.state.followers}
+        github_link={this.state.github_link}
+        name={this.state.name}
+        bio={this.state.bio} />
+    }
+    let f = this.state.loading;
+    let s;
+    if (f) {
+      s = <Spinner />
+    } else {
+      s = null
     }
     return (
-      <div className="app-container">
-        <h1>Gitsearch</h1>
-        <Searchbar change={this.onChangeHandler} />
-        {info}
+      <div className="container mx-auto text-center">
+        <h1 className="my-10 text-5xl text-grey-darker"><i class="fab fa-github"></i> Gitsearch</h1>
+        <Searchbar submit={this.handleSubmit} change={this.handleChange} />
+        {s}
+        {t}
       </div>
     );
   }
